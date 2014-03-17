@@ -1,0 +1,8 @@
+.TH PFDB 1
+.SH NAME
+pfdb - printf debugger
+.SH SYNOPSIS
+.B pfdb
+.SH DESCRIPTION
+.B pfdb
+enables simple debugger-like functionality through simple print statements. You can dump the state of your program using log statements at various points in time by beginning a line with a period followed by a name (no spaces) followed by a space and then the value.
