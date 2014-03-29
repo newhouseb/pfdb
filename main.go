@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/nsf/termbox-go"
+	"github.com/pebbe/util"
 	"os"
 	"strings"
 	"time"
@@ -68,17 +69,17 @@ func draw_all(state *ProgramState) {
 	}
 
 	// Draw the variables
-	i := 0
-	for _, k := range state.log_keys {
+	for i, k := range state.log_keys {
 		v := state.log[k]
+
+		for j, c := range v.Name {
+			termbox.SetCell(width/2+2+j, i, c, termbox.ColorDefault, termbox.ColorDefault)
+		}
 
 		if !state.realtime && state.timecursor < v.Timestamp[0] {
 			continue
 		}
 
-		for j, c := range v.Name {
-			termbox.SetCell(width/2+2+j, i, c, termbox.ColorDefault, termbox.ColorDefault)
-		}
 		for j, c := range v.Values[v.Focused] {
 			termbox.SetCell(width/2+2+j+len(v.Name)+1, i, c, termbox.ColorDefault, termbox.ColorDefault)
 		}
@@ -86,8 +87,6 @@ func draw_all(state *ProgramState) {
 		for j, c := range pos {
 			termbox.SetCell(width-len(pos)+j, i, c, termbox.ColorDefault, termbox.ColorDefault)
 		}
-
-		i += 1
 	}
 
 	// Draw the selected index
@@ -161,6 +160,11 @@ func main() {
 	var delimeter = flag.String("delimeter", "=", "Prefix used to match lines")
 	flag.Parse()
 
+	if util.IsTerminal(os.Stdin) {
+		fmt.Println("We only support streams from unix pipes at the moment, please pipe something into pfdb")
+		return
+	}
+
 	err := termbox.Init()
 	if err != nil {
 		panic(err)
@@ -202,10 +206,13 @@ func main() {
 		}
 	}()
 
+	draw_all(&state)
+
 loop:
 	for {
 		select {
 		case line := <-stdin_channel:
+			fmt.Println("A LINE")
 			timestamp := time.Now().UnixNano()
 			if len(line) > 0 && strings.HasPrefix(line, *prefix) {
 				slices := strings.SplitN(strings.TrimPrefix(string(line), *prefix), *delimeter, 2)
